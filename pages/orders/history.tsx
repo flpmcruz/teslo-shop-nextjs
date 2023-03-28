@@ -62,8 +62,6 @@ const HistoryPage = () => {
                 <DataGrid 
                     rows={ rows }
                     columns={ columns }
-                    pageSize={ 10 }
-                    rowsPerPageOptions={ [10] }
                 />
 
             </Grid>
