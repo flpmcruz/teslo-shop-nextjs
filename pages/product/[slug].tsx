@@ -1,22 +1,62 @@
+import { useState, useContext } from 'react';
 import { NextPage } from 'next';
+import { useRouter } from 'next/router';
 import { Button, Chip, Grid, Typography, Box } from '@mui/material';
+
 import { getAllProductsSlugs, getProductBySlug } from '@/database/dbProducts';
 import { ShopLayout } from '@/components/layouts';
+import { CartContext } from '@/context';
 import { ProductSlideshow, SizeSelector } from '@/components/products';
 import { ItemCounter } from '@/components/ui';
-import { IProduct } from '@/interfaces';
+import { ICartProduct, IProduct, ISize } from '@/interfaces';
 
 interface Props {
   product: IProduct
 }
 
-const ProductPage: NextPage<Props> = ({product}) => {
+const ProductPage: NextPage<Props> = ({ product }) => {
 
   // Una forma de hacerlo es con el hook useProducts - Client Side Rendering
   // const router = useRouter()
   // const { products: product, isLoading } = useProducts(`/products/${router.query.slug}`)
   // isLoading && <h1>Cargando...</h1>
   // !product && <h1>No existe...</h1>
+
+  const router = useRouter()
+  const { addProductToCart  } = useContext(CartContext)
+
+  const [tempCartProduct, setTempCartProduct] = useState<ICartProduct>({
+    _id: product._id,
+    image: product.images[0],
+    price: product.price,
+    size: undefined,
+    slug: product.slug,
+    title: product.title,
+    gender: product.gender,
+    quantity: 1,
+  })
+
+  const addProduct = () => {
+    if(!tempCartProduct.size) return
+
+    //Dispatch action add to cart
+    addProductToCart(tempCartProduct)
+    router.push('/cart')
+  }
+
+  const onSelectSize = (size: ISize) => {
+    setTempCartProduct({
+      ...tempCartProduct,
+      size
+    })
+  }
+
+  const onUpdateQuantity = (quantity: number) => {
+    setTempCartProduct({
+      ...tempCartProduct,
+      quantity
+    })
+  }
 
   return (
     <ShopLayout title={product.title} pageDescription={product.description}>
@@ -37,16 +77,31 @@ const ProductPage: NextPage<Props> = ({product}) => {
             {/* Cantidad */}
             <Box>
               <Typography variant='subtitle2'>Cantidad</Typography>
-              <ItemCounter />
-              <SizeSelector sizes={ product.sizes } />
+              <ItemCounter
+                currentValue={tempCartProduct.quantity}
+                updateQuantity={onUpdateQuantity}
+                maxValue={product.inStock}
+              />
+              <SizeSelector sizes={product.sizes} selectedSize={tempCartProduct.size} onSelectSize={onSelectSize} />
             </Box>
 
-            {/* Agregar al Carrito */}
-            <Button color='secondary' className='circular-btn'>
-              Agregar al Carrito
-            </Button>
-
-            {/* <Chip label="No hay disponibles" color='error' variant='outlined'/> */}
+            {
+              (product.inStock > 0)
+                ? (
+                  <Button
+                    color='secondary'
+                    className='circular-btn'
+                    onClick={addProduct}
+                  >
+                    {
+                      tempCartProduct.size
+                        ? 'Agregar al Carrito'
+                        : 'Selecciona un tamaño'
+                    }
+                  </Button>
+                )
+                : <Chip label="No hay disponibles" color='error' variant='outlined' />
+            }
 
             {/* Descripcion */}
             <Box sx={{ mt: 3 }}>
@@ -81,13 +136,16 @@ const ProductPage: NextPage<Props> = ({product}) => {
 //   }
 // }
 
+export default ProductPage
+
+
 //gestStaticPaths - Genera las rutas de las paginas estaticas
 export async function getStaticPaths() {
 
   const productSlugs = await getAllProductsSlugs()
 
   return {
-    paths: productSlugs.map(({slug}) => ({
+    paths: productSlugs.map(({ slug }) => ({
       params: { slug }
     })),
     fallback: 'blocking'
@@ -97,9 +155,9 @@ export async function getStaticPaths() {
 //getStaticProps - Genera los datos de las paginas estaticas
 export async function getStaticProps({ params }: any) {
   const { slug = '' } = params as { slug: string }
-  const product =  await getProductBySlug(slug)
+  const product = await getProductBySlug(slug)
 
-  if(!product) {
+  if (!product) {
     return {
       redirect: {
         destination: '/',
@@ -114,6 +172,3 @@ export async function getStaticProps({ params }: any) {
     revalidate: 60 * 60 * 24 // 24 horas
   }
 }
-
-
-export default ProductPage

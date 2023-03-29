@@ -1,8 +1,7 @@
-import { CartList, OrderSummary } from '@/components/cart';
-import { Typography, Grid, Card, CardContent, Divider, Button, Link } from '@mui/material';
-import { Box } from '@mui/system';
-import { ShopLayout } from '@/components/layouts/ShopLayout';
 import NextLink from 'next/link';
+import { Box, Typography, Grid, Card, CardContent, Divider, Button, Link } from '@mui/material';
+import { CartList, OrderSummary } from '@/components/cart';
+import { ShopLayout } from '@/components/layouts/ShopLayout';
 
 const SummaryPage = () => (
     <ShopLayout title={'Resumen de orden'} pageDescription={'Resumen de la orden'}>
