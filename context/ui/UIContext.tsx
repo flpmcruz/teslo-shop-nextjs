@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-export interface ContextProps {
+export interface UIContextProps {
      isMenuOpen: boolean
 
      // Actions
@@ -9,4 +9,4 @@ export interface ContextProps {
 
 export const UIContext = createContext({
 
-} as ContextProps)
+} as UIContextProps)

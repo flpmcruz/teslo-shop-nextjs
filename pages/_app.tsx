@@ -2,7 +2,7 @@ import type { AppProps } from 'next/app'
 import { SWRConfig } from 'swr'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { lightTheme } from '@/themes'
-import { CartProvider, UIProvider } from '@/context'
+import { AuthProvider, CartProvider, UIProvider } from '@/context'
 import '@/styles/globals.css'
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -13,14 +13,16 @@ export default function App({ Component, pageProps }: AppProps) {
         fetcher: (resource, init) => fetch(resource, init).then((res) => res.json()),
       }}
     >
-      <CartProvider>
-        <UIProvider>
-          <ThemeProvider theme={lightTheme}>
-            <CssBaseline /> {/* Reset CSS */}
-            <Component {...pageProps} />
-          </ThemeProvider>
-        </UIProvider>
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <UIProvider>
+            <ThemeProvider theme={lightTheme}>
+              <CssBaseline /> {/* Reset CSS */}
+              <Component {...pageProps} />
+            </ThemeProvider>
+          </UIProvider>
+        </CartProvider>
+      </AuthProvider>
     </SWRConfig>
   )
 }

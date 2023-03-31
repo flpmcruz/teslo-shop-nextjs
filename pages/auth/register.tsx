@@ -1,43 +1,138 @@
+import { useContext, useState } from 'react';
+import { useRouter } from 'next/router';
 import NextLink from 'next/link';
-import { Box, Button, Grid, Link, TextField, Typography } from '@mui/material';
+import { useForm } from 'react-hook-form';
+import { Box, Button, Chip, Grid, Link, TextField, Typography } from '@mui/material';
+import { ErrorOutline } from '@mui/icons-material';
+
 import { AuthLayout } from '@/components/layouts'
+import { tesloApi } from '@/api';
+import { validations } from '@/utils';
+import { AuthContext } from '@/context';
+
+type FormData = {
+    email: string
+    password: string
+    name: string
+};
 
 const RegisterPage = () => {
-  return (
-    <AuthLayout title={'Ingresar'}>
-        <Box sx={{ width: 350, padding:'10px 20px' }}>
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <Typography variant='h1' component="h1">Crear cuenta</Typography>
-                </Grid>
 
-                <Grid item xs={12}>
-                    <TextField label="Nombre completo" variant="filled" fullWidth />
-                </Grid>
-                <Grid item xs={12}>
-                    <TextField label="Correo" variant="filled" fullWidth />
-                </Grid>
-                <Grid item xs={12}>
-                    <TextField label="Contraseña" type='password' variant="filled" fullWidth />
-                </Grid>
+    const router = useRouter()
+    const { registerUser } = useContext(AuthContext)
+    const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+    const [showError, setShowError] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
 
-                <Grid item xs={12}>
-                    <Button color="secondary" className='circular-btn' size='large' fullWidth>
-                        Ingresar
-                    </Button>
-                </Grid>
+    const onRegisterForm = async ({ email, password, name }: FormData) => {
 
-                <Grid item xs={12} display='flex' justifyContent='end'>
-                    <NextLink href="/auth/login" passHref>
-                        <Link underline='always'>
-                            ¿Ya tienes cuenta?
-                        </Link>
-                    </NextLink>
-                </Grid>
-            </Grid>
-        </Box>
-    </AuthLayout>
-  )
+        setShowError(false)
+
+        const { hasError, message } = await registerUser(email, password, name)
+
+        if (hasError) {
+            setShowError(true)
+            setTimeout(() => setShowError(false), 3000)
+            setErrorMessage(message!)
+            return
+        }
+
+        router.replace('/')
+    }
+
+    return (
+        <AuthLayout title={'Ingresar'}>
+            <form onSubmit={handleSubmit(onRegisterForm)}> {/* Llama onSubmit si pasan las validaciones */}
+                <Box sx={{ width: 350, padding: '10px 20px' }}>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <Typography variant='h1' component="h1">Crear cuenta</Typography>
+                            <Chip
+                                label={errorMessage}
+                                color='error'
+                                icon={<ErrorOutline />}
+                                className='fadeIn'
+                                sx={{ display: showError ? 'flex' : 'none', mt: 2 }}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField 
+                                label="Nombre completo" 
+                                variant="filled" 
+                                fullWidth 
+
+                                /* Validacion del campo */
+                                {
+                                    ...register('name', {
+                                        required: 'Este campo es requerido',
+                                        minLength: { value: 3, message: 'El nombre debe tener al menos 6 caracteres' }
+                                    })}
+                                    error={!!errors.name} /* chequeo si el objeto errors tiene un error */
+                                    helperText={errors.name?.message}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                type="email" 
+                                label="Correo" 
+                                variant="filled" 
+                                fullWidth 
+
+                                /* Validacion del campo */
+                                {
+                                    ...register('email', {
+                                        required: 'Este campo es requerido',
+                                        validate: (email) => validations.isEmail(email) /* Validacion personalizada */
+                                    })}
+                                    error={!!errors.email} /* chequeo si el objeto errors tiene un error */
+                                    helperText={errors.email?.message}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField 
+                                label="Contraseña" 
+                                type='password' 
+                                variant="filled" 
+                                fullWidth
+                                
+                                /* Validacion del campo */
+                                {
+                                    ...register('password', {
+                                        required: 'Este campo es requerido',
+                                        minLength: { value: 6, message: 'La contraseña debe tener al menos 6 caracteres' }
+                                    })}
+    
+                                    /* errors lo retorna el react-hook-form */
+                                    error={!!errors.password} /* chequeo si el objeto errors tiene un error */
+                                    helperText={errors.password?.message}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Button
+                                type='submit' 
+                                color="secondary" 
+                                className='circular-btn' 
+                                size='large' 
+                                fullWidth
+                            >
+                                Ingresar
+                            </Button>
+                        </Grid>
+
+                        <Grid item xs={12} display='flex' justifyContent='end'>
+                            <NextLink href="/auth/login" passHref legacyBehavior>
+                                <Link underline='always'>
+                                    ¿Ya tienes cuenta?
+                                </Link>
+                            </NextLink>
+                        </Grid>
+                    </Grid>
+                </Box>
+            </form>
+        </AuthLayout>
+    )
 }
 
 export default RegisterPage
