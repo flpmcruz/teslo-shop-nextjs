@@ -6,7 +6,6 @@ import { Box, Button, Chip, Grid, Link, TextField, Typography } from '@mui/mater
 import { ErrorOutline } from '@mui/icons-material';
 
 import { AuthLayout } from '@/components/layouts'
-import { tesloApi } from '@/api';
 import { validations } from '@/utils';
 import { AuthContext } from '@/context';
 
@@ -24,6 +23,7 @@ const RegisterPage = () => {
     const [showError, setShowError] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
 
+    const destination = router.query.p?.toString() || '/'
     const onRegisterForm = async ({ email, password, name }: FormData) => {
 
         setShowError(false)
@@ -37,7 +37,7 @@ const RegisterPage = () => {
             return
         }
 
-        router.replace('/')
+        router.replace(destination)
     }
 
     return (
@@ -122,7 +122,7 @@ const RegisterPage = () => {
                         </Grid>
 
                         <Grid item xs={12} display='flex' justifyContent='end'>
-                            <NextLink href="/auth/login" passHref legacyBehavior>
+                            <NextLink href={`/auth/login?p=${destination}`} passHref legacyBehavior>
                                 <Link underline='always'>
                                     ¿Ya tienes cuenta?
                                 </Link>

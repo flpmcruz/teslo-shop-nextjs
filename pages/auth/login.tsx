@@ -21,6 +21,7 @@ const LoginPage = () => {
     const { loginUser } = useContext(AuthContext)
     const [showError, setShowError] = useState(false)
 
+    const destination = router.query.p?.toString() || '/'
     const onSubmit = async ({ email, password }: FormData) => {
 
         const isValidLogin = await loginUser(email, password)
@@ -30,8 +31,7 @@ const LoginPage = () => {
             setTimeout(() => setShowError(false), 3000)
             return
         }
-
-        router.replace('/')
+        router.replace(destination)
     }
 
     return (
@@ -99,7 +99,7 @@ const LoginPage = () => {
                         </Grid>
 
                         <Grid item xs={12} display='flex' justifyContent='end'>
-                            <NextLink href="/auth/register" passHref legacyBehavior>
+                            <NextLink href={`/auth/register?p=${destination}`} passHref legacyBehavior>
                                 <Link underline='always'>
                                     ¿No tienes cuenta?
                                 </Link>

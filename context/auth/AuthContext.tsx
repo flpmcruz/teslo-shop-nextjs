@@ -8,6 +8,7 @@ export interface AuthContextProps {
      // Actions
      loginUser: (email: string, password: string) => Promise<boolean>
      registerUser: (email: string, password: string, name: string) => Promise<{ hasError: boolean; message?: string }>
+     logoutUser: () => void
 }
 
 export const AuthContext = createContext({
