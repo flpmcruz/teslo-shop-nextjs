@@ -1,5 +1,6 @@
 import { NextPage } from "next";
 import { Typography } from "@mui/material";
+
 import { ProductList } from "@/components/products";
 import { ShopLayout } from '@/components/layouts/ShopLayout';
 import { useProducts } from '@/hooks/useProducts';

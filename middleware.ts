@@ -1,20 +1,23 @@
 import { NextRequest, NextFetchEvent, NextResponse } from "next/server";
-import * as jose from 'jose';
+import { getToken } from "next-auth/jwt";
 
 export async function middleware(req: NextRequest, ev: NextFetchEvent, res: NextResponse) {
   const previousPage = req.nextUrl.pathname;
 
   if (previousPage.startsWith("/checkout")) {
-    const token = req.cookies.get("token")?.value || "";
 
-    try {
-      await jose.jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET));
-      return NextResponse.next();
-    } catch (error) {
-      return NextResponse.redirect(
-        new URL(`/auth/login?p=${previousPage}`, req.url)
-      );
+    const session = await getToken({ req, secret: process.env.NEXTAUTH_SECRET});
+
+    if (!session) {
+      const requestedPage = req.nextUrl.pathname;
+      const url = req.nextUrl.clone()
+      url.pathname = `/auth/login`
+      url.search = `?p=${requestedPage}`
+
+      return NextResponse.redirect(url)
     }
+
+    return NextResponse.next();
   }
 }
 

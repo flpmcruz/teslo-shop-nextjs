@@ -1,5 +1,6 @@
 import { FC, ReactNode, useEffect, useReducer } from 'react'
 import { useRouter } from 'next/router'
+import { useSession, signIn, signOut } from "next-auth/react"
 import Cookies from 'js-cookie'
 import axios from 'axios'
 
@@ -23,27 +24,35 @@ interface Props {
 
 export const AuthProvider: FC<Props> = ({ children }) => {
 
-     const router = useRouter()
      const [state, dispatch] = useReducer(authReducer, AUTH_INITIAL_STATE)
+     const { data, status } = useSession()
 
      useEffect(() => {
-          checkToken()
-     }, [])
-
-     const checkToken = async() => {
-
-          if( !Cookies.get('token') ) return
-          
-          try {
-               const { data } = await tesloApi.get('/user/validate-token')
-               const { token, user } = data
-               Cookies.set('token', token, { expires: 7 })
-               dispatch({ type: '[Auth] - Login', payload: user })
-          } catch (error) {
-               console.log(error)
-               Cookies.remove('token')
+          if (status === 'authenticated') {
+               dispatch({ type: '[Auth] - Login', payload: data?.user as IUser })
           }
-     }
+     }, [data, status])
+     
+
+     // Con nuestro custom hook useSession() no es necesario hacer esto
+     // useEffect(() => {
+     //      checkToken()
+     // }, [])
+
+     // const checkToken = async() => {
+
+     //      if( !Cookies.get('token') ) return
+          
+     //      try {
+     //           const { data } = await tesloApi.get('/user/validate-token')
+     //           const { token, user } = data
+     //           Cookies.set('token', token, { expires: 7 })
+     //           dispatch({ type: '[Auth] - Login', payload: user })
+     //      } catch (error) {
+     //           console.log(error)
+     //           Cookies.remove('token')
+     //      }
+     // }
 
      const loginUser = async(email: string, password: string): Promise<boolean> => {
           
@@ -89,11 +98,19 @@ export const AuthProvider: FC<Props> = ({ children }) => {
      }
 
      const logoutUser = () => {
-          Cookies.remove('token')
           Cookies.remove('cart')
+          Cookies.remove('firstName')
+          Cookies.remove('lastName')
+          Cookies.remove('address')
+          Cookies.remove('address2')
+          Cookies.remove('zip')
+          Cookies.remove('city')
+          Cookies.remove('phone')
 
+          signOut()
           //hace un refresh a la pagina
-          router.reload()
+          //router.reload()
+          //Cookies.remove('token')
      }
 
      return (

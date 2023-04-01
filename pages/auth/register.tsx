@@ -1,6 +1,8 @@
 import { useContext, useState } from 'react';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import NextLink from 'next/link';
+import { getSession, signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { Box, Button, Chip, Grid, Link, TextField, Typography } from '@mui/material';
 import { ErrorOutline } from '@mui/icons-material';
@@ -37,7 +39,8 @@ const RegisterPage = () => {
             return
         }
 
-        router.replace(destination)
+        await signIn('credentials', { email, password})
+        //router.replace(destination)
     }
 
     return (
@@ -117,7 +120,7 @@ const RegisterPage = () => {
                                 size='large' 
                                 fullWidth
                             >
-                                Ingresar
+                                Crear Cuenta
                             </Button>
                         </Grid>
 
@@ -133,6 +136,25 @@ const RegisterPage = () => {
             </form>
         </AuthLayout>
     )
+}
+
+export const getServerSideProps: GetServerSideProps = async ({req, query}) => {
+
+    const session = await getSession({ req })
+    const { p = '/'} = query
+
+    if (session) {
+        return {
+            redirect: {
+                destination: p.toString(),
+                permanent: false
+            }
+        }
+    }
+
+    return {
+        props: {}
+    }
 }
 
 export default RegisterPage
