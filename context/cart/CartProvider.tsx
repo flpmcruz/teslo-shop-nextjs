@@ -1,7 +1,10 @@
 import { FC, useReducer, ReactNode, useEffect, useState } from 'react';
 import Cookies from 'js-cookie'
-import { ICartProduct } from '@/interfaces'
+import axios from 'axios';
+
+import { ICartProduct, IOrder, ShippingAddress } from '@/interfaces'
 import { CartContext, cartReducer } from './'
+import { tesloApi } from '@/api';
 
 export interface CartState {
     isLoaded: boolean;
@@ -11,17 +14,6 @@ export interface CartState {
     tax: number;
     total: number;
     shippingAddress?: ShippingAddress;
-}
-
-export interface ShippingAddress {
-    firstName: string;
-    lastName: string;
-    address: string;
-    address2?: string;
-    zip: string;
-    city: string;
-    country: string;
-    phone: string;
 }
 
 const CART_INITIAL_STATE: CartState = {
@@ -46,37 +38,37 @@ export const CartProvider: FC<Props> = ({ children }) => {
 
     useEffect(() => {
         if (!isMounted) {
-            if( Cookies.get('firstName')){
+            if (Cookies.get('firstName')) {
                 const shippingAddress = {
-                  firstName: Cookies.get('firstName') || '',
-                  lastName: Cookies.get('lastName') || '',
-                  address: Cookies.get('address') || '',
-                  address2: Cookies.get('address2') || '',
-                  zip: Cookies.get('zip') || '',
-                  city: Cookies.get('city') || '',
-                  country: Cookies.get('country') || '',
-                  phone: Cookies.get('phone') || '',
-              }
+                    firstName: Cookies.get('firstName') || '',
+                    lastName: Cookies.get('lastName') || '',
+                    address: Cookies.get('address') || '',
+                    address2: Cookies.get('address2') || '',
+                    zip: Cookies.get('zip') || '',
+                    city: Cookies.get('city') || '',
+                    country: Cookies.get('country') || '',
+                    phone: Cookies.get('phone') || '',
+                }
                 dispatch({ type: "[Cart] - Load address from cookies", payload: shippingAddress });
                 setIsMounted(true);
-            } 
-        } 
+            }
+        }
     }, [])
-    
+
     useEffect(() => {
         try {
             if (!isMounted) {
-              const cart = JSON.parse(Cookies.get("cart") ?? "[]");
-              dispatch({ type: "[Cart] - Load cart from cookies", payload: cart });
-              setIsMounted(true);
+                const cart = JSON.parse(Cookies.get("cart") ?? "[]");
+                dispatch({ type: "[Cart] - Load cart from cookies", payload: cart });
+                setIsMounted(true);
             }
         } catch (error) {
             dispatch({ type: "[Cart] - Load cart from cookies", payload: [] });
         }
     }, [isMounted]);
-   
+
     useEffect(() => {
-      if (isMounted) Cookies.set("cart", JSON.stringify(state.cart));
+        if (isMounted) Cookies.set("cart", JSON.stringify(state.cart));
     }, [state.cart, isMounted]);
 
     useEffect(() => {
@@ -88,11 +80,12 @@ export const CartProvider: FC<Props> = ({ children }) => {
             numberOfItems,
             subTotal,
             tax: subTotal * taxRate,
-            total: subTotal + subTotal * taxRate
+            total: subTotal * (1 + taxRate)
+
         }
 
         dispatch({ type: '[Cart] - Update order summary', payload: OrderSummary })
-        
+
     }, [state.cart])
 
     const addProductToCart = (product: ICartProduct) => {
@@ -110,7 +103,7 @@ export const CartProvider: FC<Props> = ({ children }) => {
             p.quantity += product.quantity
             return p
         })
-        
+
         dispatch({ type: '[Cart] - Update products in cart', payload: updatedCart })
     }
 
@@ -136,6 +129,39 @@ export const CartProvider: FC<Props> = ({ children }) => {
         dispatch({ type: '[Cart] - Update Address', payload: shippingAddress })
     }
 
+    const createOrder = async (): Promise<{ hasError: boolean; message: string }> => {
+
+        if (!state.shippingAddress) throw new Error('Shipping address is required')
+
+        //Create order
+        const body: IOrder = {
+            orderItems: state.cart.map(p => ({
+                ...p,
+                size: p.size!
+            })),
+            shippingAddress: state.shippingAddress,
+            numberOfItems: state.numberOfItems,
+            subTotal: state.subTotal,
+            tax: state.tax,
+            total: state.total,
+            isPaid: false
+        }
+
+        try {
+            const { data } = await tesloApi.post<IOrder>('/orders', body)
+
+            //Clear cart
+            dispatch({ type: '[Cart] - Order Complete' })
+            return { hasError: false, message: data._id! }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                return { hasError: true, message: error.response?.data.message || 'Error' }
+            }
+
+            return { hasError: true, message: 'Error no controlado' }
+        }
+    }
+
     return (
         <CartContext.Provider value={{
             ...state,
@@ -144,7 +170,10 @@ export const CartProvider: FC<Props> = ({ children }) => {
             addProductToCart,
             updateCartQuantity,
             removeCartQuantity,
-            updateShippingAddress
+            updateShippingAddress,
+
+            // Methods
+            createOrder,
         }}>
 
             {children}
