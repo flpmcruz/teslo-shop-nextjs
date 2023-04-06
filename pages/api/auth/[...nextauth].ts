@@ -42,8 +42,8 @@ export const authOptions = {
   //duracion de la sesion
   session: {
     maxAge: 259200, // 30 days
-    strategy: "jwt",
-    updateAge: 86400, // 1 dia
+    strategy: "jwt" as const, // o "refreshable" o no definirla para usar la predeterminada
+    updateAge: 86400, // 1 day
   },
 
   //Callbacks

@@ -19,6 +19,7 @@ export const CartList: FC<Props> = ({ editable = false, products = [] }) => {
         updateCartQuantity(product)
     }
 
+    // Para poder reutilizar el mismo componente en la pagina de carrito y en la pagina de checkout
     const productsToShow = products.length > 0 ? products : cart
 
     return (
