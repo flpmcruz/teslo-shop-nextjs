@@ -169,6 +169,6 @@ export async function getStaticProps({ params }: any) {
     props: {
       product
     },
-    revalidate: 60 * 60 * 24 // 24 horas
+    revalidate: 60 * 60 * 24 // Regenerar la pagina cada 24 horas
   }
 }

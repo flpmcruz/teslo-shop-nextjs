@@ -1,8 +1,9 @@
 import { GetServerSideProps, NextPage } from "next";
 import { Box, Typography } from "@mui/material";
+
 import { ProductList } from "@/components/products";
 import { ShopLayout } from '@/components/layouts/ShopLayout';
-import { getProductByTerm, getAllProducts } from "@/database/dbProducts";
+import { getProductByTerm } from "@/database/dbProducts";
 import { IProduct } from "@/interfaces";
 
 interface Props {
@@ -26,9 +27,7 @@ const SearchPage: NextPage<Props> = ({products, foundProducts, query}) => {
                             <Typography variant="h2" sx={{ ml: 1 }} color='secondary' textTransform='capitalize'>"{query}"</Typography>
                         </Box>
                     )
-
             }
-
 
             <ProductList products={products} />
 
@@ -67,6 +66,5 @@ export const getServerSideProps: GetServerSideProps = async ({ params }: any) =>
         }
     }
 }
-
 
 export default SearchPage;

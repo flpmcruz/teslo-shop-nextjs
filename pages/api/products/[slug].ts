@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
-import { db, SHOP_CONSTANTS } from "@/database";
+import { db } from "@/database";
 import Product from "@/models/Product";
 import { IProduct } from "@/interfaces";
 
@@ -28,7 +28,9 @@ async function getProduct(req: NextApiRequest, res: NextApiResponse<Data>) {
   const product = await Product.findOne({ slug }).lean();
   await db.disconnect();
 
-  product
-    ? res.status(200).json(product)
-    : res.status(404).json({ message: "Product not found" });
+  if(!product) return res.status(404).json({ message: "Product not found" })
+
+  product.images.map( image => image.includes("http") ? image : `${process.env.HOST_NAME}products/${image}`)
+
+  return res.status(200).json(product);
 }
